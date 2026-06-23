@@ -9,7 +9,7 @@ from __future__ import annotations
 # USD per 1M tokens.
 PRICING: dict[str, dict[str, float]] = {
     "claude-sonnet-4-6": {"input": 3.00, "output": 15.00},
-    "gpt-4o": {"input": 2.50, "output": 10.00},
+    "deepseek-chat": {"input": 0.27, "output": 1.10},
 }
 
 DEFAULT_PRICE: dict[str, float] = {"input": 0.0, "output": 0.0}

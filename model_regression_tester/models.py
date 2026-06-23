@@ -62,8 +62,8 @@ async def run_claude(client, model: str, prompt: str) -> ModelResult:
         )
 
 
-async def run_openai(client, model: str, prompt: str) -> ModelResult:
-    """Call an OpenAI chat model and capture metrics."""
+async def run_deepseek(client, model: str, prompt: str) -> ModelResult:
+    """Call DeepSeek via its OpenAI-compatible API and capture metrics."""
     start = time.perf_counter()
     try:
         resp = await client.chat.completions.create(

@@ -1,7 +1,7 @@
 # model-regression-tester
 
 An **MCP server** for LLM regression testing. It runs your prompts against two
-models side-by-side (`claude-sonnet-4-6` and `gpt-4o`), uses **Claude as a
+models side-by-side (`claude-sonnet-4-6` and `deepseek-chat`), uses **Claude as a
 meta-evaluator** to score the outputs, and reports latency, token usage, cost,
 and **cost projections at 1M / 10M tokens per day**.
 
@@ -29,7 +29,7 @@ which model gives you the best quality-per-dollar.
 
 ```
 prompt ─┬─▶ claude-sonnet-4-6 ─┐
-        └─▶ gpt-4o ────────────┤
+        └─▶ deepseek-chat ──────┤
                                ▼
                     Claude meta-evaluator (A/B scoring)
                                ▼
@@ -39,7 +39,7 @@ prompt ─┬─▶ claude-sonnet-4-6 ─┐
 ## Requirements
 
 - **Python 3.10+** (required by the MCP SDK)
-- API keys for Anthropic and OpenAI
+- API keys for Anthropic and DeepSeek
 
 ## Setup
 
@@ -59,7 +59,7 @@ Set your keys in `.env`:
 
 ```env
 ANTHROPIC_API_KEY=sk-ant-...
-OPENAI_API_KEY=sk-...
+DEEPSEEK_API_KEY=sk-...
 ```
 
 ## Running the server
@@ -85,7 +85,7 @@ Add this to your client's MCP server config (adjust the path):
       "cwd": "/absolute/path/to/AI-Model-Tester",
       "env": {
         "ANTHROPIC_API_KEY": "sk-ant-...",
-        "OPENAI_API_KEY": "sk-..."
+        "DEEPSEEK_API_KEY": "sk-..."
       }
     }
   }
@@ -136,7 +136,7 @@ See [`sample_prompts.txt`](sample_prompts.txt).
 # Model Regression Test Report
 
 - **Model A:** claude-sonnet-4-6
-- **Model B:** gpt-4o
+- **Model B:** deepseek-chat
 - **Prompts tested:** 1
 - **Judge:** Claude meta-evaluator (anonymized A/B scoring)
 
@@ -148,45 +148,45 @@ See [`sample_prompts.txt`](sample_prompts.txt).
 ### Claude (claude-sonnet-4-6)
 Two young lovers from feuding families in Verona fall in love at first sight...
 
-### GPT (gpt-4o)
+### DeepSeek (deepseek-chat)
 Romeo and Juliet, from rival families, fall in love and secretly marry...
 
 ### Metrics
-| Metric | Claude (claude-sonnet-4-6) | GPT (gpt-4o) |
+| Metric | Claude (claude-sonnet-4-6) | DeepSeek (deepseek-chat) |
 | --- | ---: | ---: |
-| Latency (ms) | 1,420 | 980 |
+| Latency (ms) | 1,420 | 1,100 |
 | Input tokens | 24 | 24 |
 | Output tokens | 96 | 88 |
-| Cost | $0.001512 | $0.000940 |
+| Cost | $0.001512 | $0.000103 |
 
 ### Scores
-| Score (1–10) | Claude (claude-sonnet-4-6) | GPT (gpt-4o) |
+| Score (1–10) | Claude (claude-sonnet-4-6) | DeepSeek (deepseek-chat) |
 | --- | ---: | ---: |
-| Accuracy | 9 | 9 |
+| Accuracy | 9 | 8 |
 | Clarity | 9 | 8 |
 | Completeness | 9 | 8 |
-| **Average** | **9.0** | **8.33** |
+| **Average** | **9.0** | **8.0** |
 
 **Winner:** Claude (claude-sonnet-4-6)
 
 ---
 ## Summary
 
-| Aggregate | Claude (claude-sonnet-4-6) | GPT (gpt-4o) |
+| Aggregate | Claude (claude-sonnet-4-6) | DeepSeek (deepseek-chat) |
 | --- | ---: | ---: |
-| Total cost (run) | $0.001512 | $0.000940 |
-| Avg latency (ms) | 1,420 | 980 |
-| Avg score | 9.00 | 8.33 |
+| Total cost (run) | $0.001512 | $0.000103 |
+| Avg latency (ms) | 1,420 | 1,100 |
+| Avg score | 9.00 | 8.00 |
 | Total tokens | 120 | 112 |
 
-**Win tally:** Claude: 1 · GPT: 0 · Tie: 0
+**Win tally:** Claude: 1 · DeepSeek: 0 · Tie: 0
 
 ## Projected Cost at Scale
 
-| Tokens/day | claude-sonnet-4-6 (daily) | claude-sonnet-4-6 (monthly) | gpt-4o (daily) | gpt-4o (monthly) |
+| Tokens/day | claude-sonnet-4-6 (daily) | claude-sonnet-4-6 (monthly) | deepseek-chat (daily) | deepseek-chat (monthly) |
 | --- | ---: | ---: | ---: | ---: |
-| 1,000,000 | $12.60 | $378.00 | $8.39 | $251.79 |
-| 10,000,000 | $126.00 | $3,780.00 | $83.93 | $2,517.86 |
+| 1,000,000 | $12.60 | $378.00 | $0.92 | $27.66 |
+| 10,000,000 | $126.00 | $3,780.00 | $9.22 | $276.64 |
 ```
 
 ## Pricing
@@ -197,7 +197,7 @@ Costs are computed from public list pricing (USD per 1M tokens), defined in
 | Model | Input | Output |
 | --- | ---: | ---: |
 | `claude-sonnet-4-6` | $3.00 | $15.00 |
-| `gpt-4o` | $2.50 | $10.00 |
+| `deepseek-chat` | $0.27 | $1.10 |
 
 Update the `PRICING` table if vendor pricing changes.
 
@@ -206,10 +206,11 @@ Update the `PRICING` table if vendor pricing changes.
 | Env var | Default | Purpose |
 | --- | --- | --- |
 | `ANTHROPIC_API_KEY` | — | Required. Claude model + evaluator. |
-| `OPENAI_API_KEY` | — | Required. GPT model. |
+| `DEEPSEEK_API_KEY` | — | Required. DeepSeek model. |
 | `CLAUDE_MODEL` | `claude-sonnet-4-6` | Model A under test. |
-| `GPT_MODEL` | `gpt-4o` | Model B under test. |
+| `DEEPSEEK_MODEL` | `deepseek-chat` | Model B under test. |
 | `EVAL_MODEL` | `claude-sonnet-4-6` | Meta-evaluator model. |
+| `DEEPSEEK_BASE_URL` | `https://api.deepseek.com` | DeepSeek's OpenAI-compatible endpoint. |
 
 ## Project structure
 

@@ -66,13 +66,13 @@ async def evaluate_pair(
     model: str,
     prompt: str,
     claude_result: ModelResult,
-    gpt_result: ModelResult,
+    deepseek_result: ModelResult,
 ) -> dict[str, object]:
     """Score the two outputs. Responses are anonymized (A/B) to reduce bias."""
-    if not claude_result.output and not gpt_result.output:
+    if not claude_result.output and not deepseek_result.output:
         return {
             "claude": _empty_scores("no output to evaluate"),
-            "gpt": _empty_scores("no output to evaluate"),
+            "deepseek": _empty_scores("no output to evaluate"),
             "winner": "tie",
             "rationale": "Both models returned no output; skipped evaluation.",
             "error": None,
@@ -81,7 +81,7 @@ async def evaluate_pair(
     user_msg = (
         f"PROMPT:\n{prompt}\n\n"
         f"RESPONSE A:\n{claude_result.output or '(no output)'}\n\n"
-        f"RESPONSE B:\n{gpt_result.output or '(no output)'}\n"
+        f"RESPONSE B:\n{deepseek_result.output or '(no output)'}\n"
     )
 
     try:
@@ -97,7 +97,7 @@ async def evaluate_pair(
     except Exception as exc:  # noqa: BLE001
         return {
             "claude": _empty_scores("evaluator error"),
-            "gpt": _empty_scores("evaluator error"),
+            "deepseek": _empty_scores("evaluator error"),
             "winner": "tie",
             "rationale": f"Evaluation failed: {exc}",
             "error": str(exc),
@@ -107,7 +107,7 @@ async def evaluate_pair(
     if not data:
         return {
             "claude": _empty_scores("could not parse evaluator output"),
-            "gpt": _empty_scores("could not parse evaluator output"),
+            "deepseek": _empty_scores("could not parse evaluator output"),
             "winner": "tie",
             "rationale": raw.strip()[:500],
             "error": "parse_error",
@@ -116,14 +116,14 @@ async def evaluate_pair(
     raw_winner = str(data.get("winner", "tie")).strip().lower()
     if raw_winner in ("a", "model a", "response a", "claude"):
         winner = "claude"
-    elif raw_winner in ("b", "model b", "response b", "gpt"):
-        winner = "gpt"
+    elif raw_winner in ("b", "model b", "response b", "deepseek"):
+        winner = "deepseek"
     else:
         winner = "tie"
 
     return {
         "claude": _with_average(data.get("A", {})),
-        "gpt": _with_average(data.get("B", {})),
+        "deepseek": _with_average(data.get("B", {})),
         "winner": winner,
         "rationale": data.get("rationale", ""),
         "error": None,
