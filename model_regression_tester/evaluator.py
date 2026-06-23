@@ -30,14 +30,22 @@ def _empty_scores(notes: str) -> dict[str, object]:
     return {"accuracy": 0, "clarity": 0, "completeness": 0, "average": 0.0, "notes": notes}
 
 
+def _coerce_score(value: object) -> int:
+    try:
+        return int(round(float(value)))  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return 0
+
+
 def _with_average(scores: dict[str, object]) -> dict[str, object]:
-    vals = [scores.get("accuracy", 0), scores.get("clarity", 0), scores.get("completeness", 0)]
-    nums = [float(v) for v in vals if isinstance(v, (int, float))]
-    avg = round(sum(nums) / len(nums), 2) if nums else 0.0
+    accuracy = _coerce_score(scores.get("accuracy"))
+    clarity = _coerce_score(scores.get("clarity"))
+    completeness = _coerce_score(scores.get("completeness"))
+    avg = round((accuracy + clarity + completeness) / 3, 2)
     return {
-        "accuracy": scores.get("accuracy", 0),
-        "clarity": scores.get("clarity", 0),
-        "completeness": scores.get("completeness", 0),
+        "accuracy": accuracy,
+        "clarity": clarity,
+        "completeness": completeness,
         "average": avg,
         "notes": scores.get("notes", ""),
     }
@@ -61,6 +69,15 @@ async def evaluate_pair(
     gpt_result: ModelResult,
 ) -> dict[str, object]:
     """Score the two outputs. Responses are anonymized (A/B) to reduce bias."""
+    if not claude_result.output and not gpt_result.output:
+        return {
+            "claude": _empty_scores("no output to evaluate"),
+            "gpt": _empty_scores("no output to evaluate"),
+            "winner": "tie",
+            "rationale": "Both models returned no output; skipped evaluation.",
+            "error": None,
+        }
+
     user_msg = (
         f"PROMPT:\n{prompt}\n\n"
         f"RESPONSE A:\n{claude_result.output or '(no output)'}\n\n"
@@ -96,8 +113,13 @@ async def evaluate_pair(
             "error": "parse_error",
         }
 
-    winner_letter = str(data.get("winner", "tie")).strip().upper()
-    winner = {"A": "claude", "B": "gpt"}.get(winner_letter, "tie")
+    raw_winner = str(data.get("winner", "tie")).strip().lower()
+    if raw_winner in ("a", "model a", "response a", "claude"):
+        winner = "claude"
+    elif raw_winner in ("b", "model b", "response b", "gpt"):
+        winner = "gpt"
+    else:
+        winner = "tie"
 
     return {
         "claude": _with_average(data.get("A", {})),

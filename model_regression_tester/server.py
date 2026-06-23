@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
 
 from .evaluator import evaluate_pair
-from .models import ModelResult, run_claude, run_openai
+from .models import run_claude, run_openai
 from .prompts import load_prompts
 from .report import (
     DEFAULT_TARGETS,
@@ -32,22 +32,32 @@ EVAL_MODEL = os.getenv("EVAL_MODEL", "claude-sonnet-4-6")
 mcp = FastMCP("model-regression-tester")
 
 
-def _anthropic_client():
-    from anthropic import AsyncAnthropic
+_anthropic = None
+_openai = None
 
-    key = os.getenv("ANTHROPIC_API_KEY")
-    if not key:
-        raise RuntimeError("ANTHROPIC_API_KEY is not set. Add it to your environment or .env file.")
-    return AsyncAnthropic(api_key=key)
+
+def _anthropic_client():
+    global _anthropic
+    if _anthropic is None:
+        from anthropic import AsyncAnthropic
+
+        key = os.getenv("ANTHROPIC_API_KEY")
+        if not key:
+            raise RuntimeError("ANTHROPIC_API_KEY is not set. Add it to your environment or .env file.")
+        _anthropic = AsyncAnthropic(api_key=key)
+    return _anthropic
 
 
 def _openai_client():
-    from openai import AsyncOpenAI
+    global _openai
+    if _openai is None:
+        from openai import AsyncOpenAI
 
-    key = os.getenv("OPENAI_API_KEY")
-    if not key:
-        raise RuntimeError("OPENAI_API_KEY is not set. Add it to your environment or .env file.")
-    return AsyncOpenAI(api_key=key)
+        key = os.getenv("OPENAI_API_KEY")
+        if not key:
+            raise RuntimeError("OPENAI_API_KEY is not set. Add it to your environment or .env file.")
+        _openai = AsyncOpenAI(api_key=key)
+    return _openai
 
 
 async def _run_single(anthropic, openai, prompt: str) -> dict:

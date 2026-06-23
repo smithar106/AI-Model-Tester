@@ -87,7 +87,7 @@ def build_report(
     lines.append(f"- **Model A:** {claude_model}")
     lines.append(f"- **Model B:** {gpt_model}")
     lines.append(f"- **Prompts tested:** {len(run_results)}")
-    lines.append(f"- **Judge:** Claude meta-evaluator (anonymized A/B scoring)")
+    lines.append("- **Judge:** Claude meta-evaluator (anonymized A/B scoring)")
     lines.append("")
 
     totals = {
